@@ -1,0 +1,25 @@
+/***************************************/
+/******* Page Defaults *****************/
+/***************************************/
+#cea-logo
+{
+	background-image: url('../img/logo.png');
+	width:            223px;
+	height:           84px;
+	float:            left;
+	margin-left:      15px;
+	position:         relative;
+	top:              0;
+	left:             0;
+}
+#footer{
+    background: #0489B1;
+    height: 50px;
+    text-align: center;
+    margin-top: 10px;
+    color:#fff;
+    width:  1200px;
+}
+#justifyText{
+    text-align : justify;
+}

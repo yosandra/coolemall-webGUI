@@ -1,0 +1,47 @@
+{% set showTitle = true %}
+{% extends '::gui_base.html.twig' %}
+{% block title %}Add experiment{% endblock %}
+
+{% form_theme form _self %}
+
+{% block _experiment_trials_trials_entry_row %}
+{% spaceless %}
+    <div class="span5 well trial">
+        <button type="button" class="close">&times;</button>
+        {{ form_label(form) }}
+        {{ form_errors(form) }}
+        {{ form_widget(form) }}
+    </div>
+{% endspaceless %}
+{% endblock %}
+
+{% block _experiment_trials_trials_entry_label %}
+    
+{% endblock %}
+
+{% block javascripts %}
+	{{ parent() }}
+	{% javascripts
+        '@AdministrationBundle/Resources/public/js/experiment.js'
+	%}
+	<script src="{{ asset_url }}" type="text/javascript"></script>
+	{% endjavascripts %}   
+{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="span12">
+            <form action="{{ path('experiment_create') }}" class= "form-horizontal" method="POST" novalidate>
+                {{ form_widget(form) }}
+                <div class="form-actions">
+                    <button type="submit" class="btn pull-right">
+                        Save
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+
+

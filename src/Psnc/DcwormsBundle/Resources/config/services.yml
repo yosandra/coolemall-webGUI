@@ -1,0 +1,7 @@
+parameters:
+#    psnc_dcworms.example.class: Psnc\DcwormsBundle\Example
+
+services:
+#    psnc_dcworms.example:
+#        class: %psnc_dcworms.example.class%
+#        arguments: [@service_id, "plain_value", %parameter%]

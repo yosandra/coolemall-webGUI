@@ -1,0 +1,53 @@
+{% set showTitle = true %}
+{% extends '::gui_base.html.twig' %}
+{% block title %}Metrics Report{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+<link href="{{ asset('css/reportStyle.css') }}" type="text/css" rel="stylesheet" />
+{% endblock %}
+
+{% block content %}
+<center>
+    <table>
+        <tr>
+            <th colspan="2">{{ type }} - {{ name }}</th>
+        </tr>
+        <tr>
+            <td>Trial name</td>
+            <td>{{ trial }}</td>
+        </tr>
+        <tr>
+            <td>Starting time</td>
+            <td>
+                {{ start }}<br>
+                {{ starte }} (Unix Epoch Time)
+            </td>
+        </tr>
+        <tr>
+            <td>Ending time</td>
+            <td>
+                {{ end }}<br>
+                {{ ende }} (Unix Epoch Time)
+            </td>
+        </tr>
+    </table>
+    <br>
+    <table>
+        <tr>
+            <th colspan="2">Calculation parameters</th>
+        </tr>
+        <tr>
+            <td colspan="2">
+                {{ form(form) }}
+            </td>
+        </tr>
+    </table>
+</center>
+
+
+{% endblock %}
+
+
+
+

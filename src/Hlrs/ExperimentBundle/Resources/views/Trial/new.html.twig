@@ -1,0 +1,22 @@
+{% set showTitle = true %}
+{% extends '::gui_base.html.twig' %}
+{% block title %}Add Trial{% endblock %}
+
+{% block body -%}
+    <h1>Add Trial</h1>
+
+    <form action="{{ path('trial_create') }}" method="post" {{ form_enctype(form) }}>
+        {{ form_widget(form) }}
+        <p>
+            <button type="submit">Create</button>
+        </p>
+    </form>
+
+        <ul class="record_actions">
+    <li>
+        <a href="{{ path('trial') }}">
+            Back to the list
+        </a>
+    </li>
+</ul>
+{% endblock %}

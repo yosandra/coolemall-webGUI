@@ -1,0 +1,851 @@
+<?php
+
+namespace Irit\MetricReportBundle\Controller;
+
+use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
+use Irit\MetricReportBundle\Entity\Element;
+use Irit\MetricReportBundle\Entity\Metric;
+use Irit\MetricReportBundle\Entity\ExperimentReport;
+use Symfony\Component\HttpFoundation\Request;
+
+class DefaultController extends Controller {
+
+    private $exp_db_id;
+    private $experiment_name;
+    private $experiment_type;
+    private $trial_name;
+    private $elemRep;
+    private $metricRep;
+    private $expParam;
+
+    private function initEnvironment() {
+        $session = $this->getRequest()->getSession();
+        $context = $session->get('context');
+
+        $this->experiment_name = $context['experiment_name'];
+        $this->experiment_type = $context['experiment_type'];
+        $this->trial_name = $context['trial_name'];
+
+        $name_f = str_replace(" ", "_", $this->experiment_name);
+        $trial_f = str_replace(" ", "_", $this->trial_name);
+
+        if ($this->experiment_type == "2") {
+            $this->exp_db_id = "exp_" . $name_f . "_trial_" . $trial_f;
+        } elseif ($this->experiment_type == "0") {
+            $this->exp_db_id = "sim_" . $name_f . "_trial_" . $trial_f;
+        } else {
+            $this->exp_db_id = "exp_";
+        }
+
+        //$this->exp_db_id = "sim_forMetrics_trial_Random";
+        //$this->experiment_type = "0";
+
+        $this->elemRep = $this->getDoctrine()->getRepository('MetricReportBundle:Element');
+        $this->metricRep = $this->getDoctrine()->getRepository('MetricReportBundle:Metric');
+
+        $duration = $this->getDBMetric($this->exp_db_id, '', 'MC_Duration');
+        $startTime = $this->getDBMetric($this->exp_db_id, '', 'MC_Start_Time');
+        $endTime = $this->getDBMetric($this->exp_db_id, '', 'MC_End_Time');
+
+        if ($duration != "-") {
+            $this->expParam = array(
+                'name' => $this->experiment_name,
+                'trial' => $this->trial_name,
+                'type' => $this->experiment_type,
+                'duration' => gmdate("H:i:s", $duration),
+                'start' => $startTime,
+                'end' => $endTime);
+        }
+    }
+
+    private function getDBMetric($experiment, $level, $name) {
+        try {
+            $param = array(
+                'experiment' => $experiment,
+                'level' => $level,
+                'name' => $name
+            );
+
+            if ($level != '') {
+                $param['level'] = $level;
+            }
+
+            $metric = $this->metricRep->findOneBy($param);
+
+            if (!$metric) {
+                return "-";
+            } else {
+                $val = $metric->getValue();
+
+                return $val;
+            }
+        } catch (\Exception $ex) {
+            return "-";
+        }
+    }
+
+    private function getDBElem($experiment, $level, $parent) {
+        try {
+            $param = array(
+                'experiment' => $experiment,
+                'level' => $level);
+
+            if ($parent != '') {
+                $param['parent'] = $parent;
+            }
+
+            $elem = $this->elemRep->findOneBy($param);
+
+            if (!$elem) {
+                return "-";
+            } else {
+                $val = explode('$', $elem->getValue());
+
+                return $val;
+            }
+        } catch (\Exception $ex) {
+            return "-";
+        }
+    }
+
+    private function reportError($error) {
+        if ($error == "missingExperiment") {
+            $errorParam = array(
+                'error' => 0
+            );
+        } elseif ($error == "missingReport") {
+            $session = $this->getRequest()->getSession();
+            $context = $session->get('context');
+            $startingTime = $context['timestamp_start'];
+            $endingTime = $context['timestamp_end'];
+
+            $reportPID = $session->get('reportPID');
+
+            if ($startingTime) {
+                $start = $startingTime->format('Y-m-d H:i:s');
+                $starte = $startingTime->getTimestamp();
+            } else {
+                $start = "-";
+                $starte = "-";
+            }
+
+            if ($endingTime) {
+                $end = $endingTime->format('Y-m-d H:i:s');
+                $ende = $endingTime->getTimestamp();
+            } else {
+                $end = "-";
+                $ende = "-";
+            }
+
+            if ($this->experiment_type == "2") {
+                $exp_type = "Testbed";
+            } else {
+                $exp_type = "Simulation";
+            }
+
+            if ($reportPID && $this->isRunning($reportPID)) {
+                $reportExperiment = $session->get('reportExperiment');
+                $reportTrial = $session->get('reportTrial');
+
+                $errorParam = array(
+                    'error' => 4,
+                    'reportExperiment' => $reportExperiment,
+                    'reportTrial' => $reportTrial
+                );
+            } else {
+                $reportPID = 0;
+                $session->set('reportPID', $reportPID);
+
+                $errorParam = array(
+                    'error' => 1,
+                    'name' => $this->experiment_name,
+                    'type' => $exp_type,
+                    'trial' => $this->trial_name,
+                    'start' => $start,
+                    'end' => $end,
+                    'starte' => $starte,
+                    'ende' => $ende);
+            }
+        } elseif ($error == "missingParameters") {
+            $errorParam = array(
+                'error' => 2,
+                'errorType' => 0
+            );
+        }
+
+        return $this->render(
+                        'MetricReportBundle:Default:errorReport.html.twig', $errorParam);
+    }
+
+    private function runThread($cmd) {
+        $pid = 0;
+
+        exec(sprintf('nohup %s > /dev/null 2>&1 & echo $! &', $cmd), $pid);
+
+        return $pid[0];
+    }
+
+    private function isRunning($pid) {
+        try {
+            $result = shell_exec(sprintf("ps %s", $pid));
+            if (count(preg_split("/\n/", $result)) > 2) {
+                return true;
+            }
+        } catch (Exception $e) {
+            print_r($e);
+        }
+
+        return false;
+    }
+
+    private function parseTime($time) {
+        if ($time) {
+            $ptime = $time->format('Y-m-d H:i:s');
+            $ptime_ts = $time->getTimestamp();
+        } else {
+            $ptime = "-";
+            $ptime_ts = "-";
+        }
+
+        return array($ptime, $ptime_ts);
+    }
+
+    private function parseList($list) {
+        $list1 = str_replace(' ', '', $list);
+        $elements = explode(',', $list1);
+
+        return array_filter($elements);
+    }
+
+    private function parseTestbedParameters(ExperimentReport $experimentReport) {
+        $paramUWNL = "";
+        $paramUWVL = "";
+        $paramSSNL = "";
+
+        if ($experimentReport->getUsefulWorkNodesList()) {
+            $usefulWorkNodesList = $this->parseList($experimentReport->getUsefulWorkNodesList());
+            $usefulWorkValuesList = $this->parseList($experimentReport->getUsefulWorkValuesList());
+
+            for ($i = 0; $i < count($usefulWorkNodesList); $i++) {
+                $paramUWNL = $paramUWNL . "'" . $usefulWorkNodesList[$i] . "'" . "___";
+                $paramUWVL = $paramUWVL . $usefulWorkValuesList[$i] . ",";
+            }
+            $paramUWNL = "\"" . rtrim($paramUWNL, "___") . "\"";
+            $paramUWVL = "\"[" . rtrim($paramUWVL, ",") . "]\"";
+        } else {
+            $paramUWNL = "\"___\"";
+            $paramUWVL = "\"[]\"";
+        }
+
+        if ($experimentReport->getSubSetNodesList()) {
+            $subSetNodesList = $this->parseList($experimentReport->getSubSetNodesList());
+
+            for ($i = 0; $i < count($subSetNodesList); $i++) {
+                $paramSSNL = $paramSSNL . "'" . $subSetNodesList[$i] . "'" . "___";
+            }
+            $paramSSNL = "\"" . rtrim($paramSSNL, "___") . "\"";
+        } else {
+            $paramSSNL = "\"___\"";
+        }
+
+        return array($paramUWNL, $paramUWVL, $paramSSNL);
+    }
+
+    private function startTestbedCalculation(ExperimentReport $experimentReport) {
+        list($paramUWNL, $paramUWVL, $paramSSNL) = $this->parseTestbedParameters($experimentReport);
+
+        if (count($this->parseList($experimentReport->getUsefulWorkNodesList())) == count($this->parseList($experimentReport->getUsefulWorkValuesList()))) {
+
+            $name_f = str_replace(" ", "___", $experimentReport->getExperiment());
+            $trial_f = str_replace(" ", "___", $experimentReport->getTrial());
+            $debbPath_f = str_replace(" ", "___", $experimentReport->getDebbPath());
+
+            $command = ('/srv/www/coolemall_executeCommand recs1.coolemall.eu' .
+                    ' /opt/rw/MetricCalc/testbedMetrics.py' .
+                    '\\\\' . $name_f .
+                    '\\\\' . $trial_f .
+                    '\\\\' . $experimentReport->getStartingTime() .
+                    '\\\\' . $experimentReport->getEndingTime() .
+                    '\\\\' . $paramUWNL .
+                    '\\\\' . $paramUWVL .
+                    '\\\\' . $paramSSNL .
+                    '\\\\' . $debbPath_f);
+
+            $session = $this->getRequest()->getSession();
+            $reportPID = $this->runThread($command);
+            $session->set('reportPID', $reportPID);
+            $session->set('reportExperiment', $experimentReport->getExperiment());
+            $session->set('reportTrial', $experimentReport->getTrial());
+
+            $errorParam = array(
+                'error' => 4,
+                'reportExperiment' => $experimentReport->getExperiment(),
+                'reportTrial' => $experimentReport->getTrial()
+            );
+
+            return $this->render(
+                            'MetricReportBundle:Default:errorReport.html.twig', $errorParam);
+        } else {
+            $errorParam = array(
+                'error' => 2,
+                'errorType' => 1
+            );
+
+            return $this->render(
+                            'MetricReportBundle:Default:errorReport.html.twig', $errorParam);
+        }
+    }
+
+    /**
+     * @Route("/metric/generateReport", name="report_generator")
+     * @Template()
+     */
+    public function generateReportAction(Request $request) {
+        $this->initEnvironment();
+
+        $session = $this->getRequest()->getSession();
+        $context = $session->get('context');
+        $path_plmxml = $session->get('path_plmxml');
+
+        $startingTime = $context['timestamp_start'];
+        $endingTime = $context['timestamp_end'];
+
+        list($start, $starte) = $this->parseTime($startingTime);
+        list($end, $ende) = $this->parseTime($endingTime);
+
+        $experimentReport = new ExperimentReport();
+        $experimentReport->setExperiment($this->experiment_name);
+        $experimentReport->setTrial($this->trial_name);
+        $experimentReport->setDebbPath($path_plmxml);
+        $experimentReport->setStartingTime($starte);
+        $experimentReport->setEndingTime($ende);
+
+        if ($this->experiment_type == "2") {
+            $experimentReport->setExperimentType("Testbed");
+
+            $form = $this->createFormBuilder($experimentReport)
+                    ->add('startingTime', 'text', array('label' => 'Trial starting time (epoch)'))
+                    ->add('endingTime', 'text', array('label' => 'Trial ending time (epoch)'))
+                    ->add('usefulWorkNodesList', 'text', array('label' => 'List of nodes producing useful work (e.g. i7_0_01, i7_0_04, i7_0_05, i7_0_06)'))
+                    ->add('usefulWorkValuesList', 'text', array('label' => 'List of useful work values (e.g. 5000, 23340, 562813, 0)'))
+                    //->add('subSetNodesList', 'text', array('label' => 'Subset of nodes for imbalance metrics calculation (e.g. i7_0_01, i7_0_04, i7_0_05, i7_0_06)'))
+                    ->add('debbPath', 'text', array('label' => 'DEBB path'))
+                    ->add('save', 'submit', array('label' => 'Start calculation'))
+                    ->getForm();
+
+            $viewParam = array(
+                'form' => $form->createView(),
+                'name' => $experimentReport->getExperiment(),
+                'type' => $experimentReport->getExperimentType(),
+                'trial' => $experimentReport->getTrial(),
+                'start' => $start,
+                'end' => $end,
+                'starte' => $experimentReport->getStartingTime(),
+                'ende' => $experimentReport->getEndingTime()
+            );
+
+            $form->handleRequest($request);
+
+            if ($form->isValid()) {
+                return $this->startTestbedCalculation($experimentReport);
+            }
+
+            return $this->render(
+                            'MetricReportBundle:Default:generateReport.html.twig', $viewParam);
+        }
+
+        if (!($this->experiment_name && $this->trial_name)) {
+            $errorParam = array(
+                'error' => 2,
+                'errorType' => 2
+            );
+
+            return $this->render(
+                            'MetricReportBundle:Default:errorReport.html.twig', $errorParam);
+        }
+
+        if ($this->experiment_type != 0) {
+            $errorParam = array(
+                'error' => 2,
+                'errorType' => 3
+            );
+
+            return $this->render(
+                            'MetricReportBundle:Default:errorReport.html.twig', $errorParam);
+        }
+
+        $name_f = str_replace(" ", "___", $experimentReport->getExperiment());
+        $trial_f = str_replace(" ", "___", $experimentReport->getTrial());
+        $debbPath_f = str_replace(" ", "___", $experimentReport->getDebbPath());
+
+        $command = ('/srv/www/coolemall_executeCommand recs1.coolemall.eu' .
+                ' /opt/rw/MetricCalc/simulationMetrics.py' .
+                '\\\\' . $name_f .
+                '\\\\' . $trial_f .
+                '\\\\' . $debbPath_f);
+
+        $reportPID = $this->runThread($command);
+        $session->set('reportPID', $reportPID);
+        $session->set('reportExperiment', $experimentReport->getExperiment());
+        $session->set('reportTrial', $experimentReport->getTrial());
+
+        $errorParam = array(
+            'error' => 4,
+            'reportExperiment' => $experimentReport->getExperiment(),
+            'reportTrial' => $experimentReport->getTrial()
+        );
+
+        return $this->render(
+                        'MetricReportBundle:Default:errorReport.html.twig', $errorParam);
+    }
+
+    /**
+     * @Route("/metric", name="metric_calculator")
+     * @Template()
+     */
+    public function indexAction() {
+        $this->initEnvironment();
+
+        if (!$this->experiment_name) {
+            return $this->reportError("missingExperiment");
+        }
+
+        $session = $this->getRequest()->getSession();
+        $session->set('idroom', "0");
+        $session->set('idrack', "0");
+        $session->set('idnodegroup', "0");
+        $session->set('idnode', "0");
+
+        $dcElems = $this->getDBElem($this->exp_db_id, 'room', '');
+
+        if ($dcElems == "-") {
+            return $this->reportError("missingReport");
+        }
+
+        if ($this->experiment_type != "0") {
+            $twigParam = array(
+                'dcElems' => $dcElems,
+                'expParam' => $this->expParam);
+
+            return $this->render('MetricReportBundle:Default:index.html.twig', $twigParam);
+        } else {
+            $idroom = "room1";
+            $ecost = $this->getDBMetric($this->exp_db_id, $idroom, 'MC_Ecost');
+            $cfoot = $this->getDBMetric($this->exp_db_id, $idroom, 'MC_CO2em');
+            $pue = $this->getDBMetric($this->exp_db_id, $idroom, 'MC_PUE');
+            $energy = $this->getDBMetric($this->exp_db_id, $idroom, 'MC_Energy');
+
+            $metrics = array(
+                'level' => "dc", 'ecost' => $ecost,
+                'cfoot' => $cfoot, 'pue' => $pue,
+                'energy' => $energy);
+
+            $twigParam = array(
+                'dcElems' => $dcElems,
+                'metrics' => $metrics,
+                'expParam' => $this->expParam);
+
+            return $this->render(
+                            'MetricReportBundle:Default:simReport.html.twig', $twigParam
+            );
+        }
+    }
+
+    /**
+     * @Route("/metric/levelroom/{idroom}", name="room_metric_report", defaults={"idroom" = 0})
+     * @Template()
+     * @Method({"GET"})
+     */
+    public function levelroomAction($idroom) {
+        $this->initEnvironment();
+
+        $session = $this->getRequest()->getSession();
+        $session->set('idroom', $idroom);
+        $session->set('idrack', "0");
+        $session->set('idnodegroup', "0");
+        $session->set('idnode', "0");
+
+        $dcElems = $this->getDBElem($this->exp_db_id, 'room', '');
+        $roomElems = $this->getDBElem($this->exp_db_id, 'rack', $idroom);
+
+        if ($this->experiment_type == "2") {
+            $twigParam = array(
+                'dcElems' => $dcElems,
+                'roomElems' => $roomElems,
+                'expParam' => $this->expParam);
+
+            return $this->render(
+                            'MetricReportBundle:Default:roomReport.html.twig', $twigParam);
+        } elseif ($this->experiment_type == "0") {
+            $energy = $this->getDBMetric($this->exp_db_id, $idroom, 'MC_Energy');
+            $productivity = $this->getDBMetric($this->exp_db_id, $idroom, 'MC_Productivity');
+
+            $dhur = $this->getDBMetric($this->exp_db_id, $idroom, 'MC_DH-UR');
+
+            $loadMin = $this->getDBMetric($this->exp_db_id, $idroom, 'MC_Serv_Usage_Min');
+            $loadMax = $this->getDBMetric($this->exp_db_id, $idroom, 'MC_Serv_Usage_Max');
+            $loadAvg = $this->getDBMetric($this->exp_db_id, $idroom, 'MC_Serv_Usage_Avg');
+
+            $powMin = $this->getDBMetric($this->exp_db_id, $idroom, 'MC_Power_Min');
+            $powMax = $this->getDBMetric($this->exp_db_id, $idroom, 'MC_Power_Max');
+            $powAvg = $this->getDBMetric($this->exp_db_id, $idroom, 'MC_Power_Avg');
+
+            $pue = $this->getDBMetric($this->exp_db_id, $idroom, 'MC_PUE');
+            $dcie = $this->getDBMetric($this->exp_db_id, $idroom, 'MC_DCiE');
+
+            $totHeatGen = $this->getDBMetric($this->exp_db_id, $idroom, 'MC_Heat_Generation_Tot');
+            $heatImb = $this->getDBMetric($this->exp_db_id, $idroom, 'MC_Imb_Heat');
+
+            $metrics = array(
+                'level' => "room", 'dhur' => $dhur,
+                'energy' => $energy, 'productivity' => $productivity,
+                'loadMin' => $loadMin, 'loadMax' => $loadMax, 'loadAvg' => $loadAvg,
+                'powMin' => $powMin, 'powMax' => $powMax, 'powAvg' => $powAvg,
+                'pue' => $pue, 'dcie' => $dcie,
+                'totHeatGen' => $totHeatGen, 'heatImb' => $heatImb);
+
+            $twigParam = array(
+                'dcElems' => $dcElems,
+                'roomElems' => $roomElems,
+                'metrics' => $metrics,
+                'expParam' => $this->expParam);
+
+            return $this->render(
+                            'MetricReportBundle:Default:simReport.html.twig', $twigParam
+            );
+        } else {
+            return $this->reportError("missingReport");
+        }
+    }
+
+    /**
+     * @Route("/metric/levelrack/{idrack}", name="rack_metric_report", defaults={"idrack" = 0})
+     * @Template()
+     * @Method({"GET"})
+     */
+    public function levelrackAction($idrack) {
+        $this->initEnvironment();
+
+        $session = $this->getRequest()->getSession();
+        $session->set('idrack', $idrack);
+        $session->set('idnodegroup', "0");
+        $session->set('idnode', "0");
+
+        $idroom = $session->get('idroom');
+
+        if (!$idroom) {
+            return $this->indexAction();
+        }
+
+        $dcElems = $this->getDBElem($this->exp_db_id, 'room', '');
+        $roomElems = $this->getDBElem($this->exp_db_id, 'rack', $idroom);
+        $rackElems = $this->getDBElem($this->exp_db_id, 'nodegroup', $idrack);
+
+        // Init Metrics
+        if ($this->experiment_type == "2") {
+            $energy = $this->getDBMetric($this->exp_db_id, $idrack, 'MC_Energy');
+            $productivity = $this->getDBMetric($this->exp_db_id, $idrack, 'MC_Productivity');
+
+            $coolIndLowMin = $this->getDBMetric($this->exp_db_id, $idrack, 'MC_Cool_Index_Lo_Min');
+            $coolIndLowMax = $this->getDBMetric($this->exp_db_id, $idrack, 'MC_Cool_Index_Lo_Max');
+            $coolIndLowAvg = $this->getDBMetric($this->exp_db_id, $idrack, 'MC_Cool_Index_Lo_Avg');
+
+            $coolIndHiMin = $this->getDBMetric($this->exp_db_id, $idrack, 'MC_Cool_Index_Hi_Min');
+            $coolIndHiMax = $this->getDBMetric($this->exp_db_id, $idrack, 'MC_Cool_Index_Hi_Max');
+            $coolIndHiAvg = $this->getDBMetric($this->exp_db_id, $idrack, 'MC_Cool_Index_Hi_Avg');
+
+            $tempImbMin = $this->getDBMetric($this->exp_db_id, $idrack, 'MC_Imb_Temp_Min');
+            $tempImbMax = $this->getDBMetric($this->exp_db_id, $idrack, 'MC_Imb_Temp_Max');
+            $tempImbAvg = $this->getDBMetric($this->exp_db_id, $idrack, 'MC_Imb_Temp_Avg');
+
+            $metrics = array('energy' => $energy, 'productivity' => $productivity,
+                'coolIndLowMin' => $coolIndLowMin, 'coolIndLowMax' => $coolIndLowMax, 'coolIndLowAvg' => $coolIndLowAvg,
+                'coolIndHiMin' => $coolIndHiMin, 'coolIndHiMax' => $coolIndHiMax, 'coolIndHiAvg' => $coolIndHiAvg,
+                'tempImbMin' => $tempImbMin, 'tempImbMax' => $tempImbMax, 'tempImbAvg' => $tempImbAvg);
+
+            $twigParam = array(
+                'dcElems' => $dcElems,
+                'roomElems' => $roomElems,
+                'rackElems' => $rackElems,
+                'metrics' => $metrics,
+                'expParam' => $this->expParam);
+
+            return $this->render(
+                            'MetricReportBundle:Default:rackReport.html.twig', $twigParam
+            );
+        } elseif ($this->experiment_type == "0") {
+            $energy = $this->getDBMetric($this->exp_db_id, $idrack, 'MC_Energy');
+            $productivity = $this->getDBMetric($this->exp_db_id, $idrack, 'MC_Productivity');
+
+            $dhur = $this->getDBMetric($this->exp_db_id, $idrack, 'MC_DH-UR');
+
+            $loadMin = $this->getDBMetric($this->exp_db_id, $idrack, 'MC_Serv_Usage_Min');
+            $loadMax = $this->getDBMetric($this->exp_db_id, $idrack, 'MC_Serv_Usage_Max');
+            $loadAvg = $this->getDBMetric($this->exp_db_id, $idrack, 'MC_Serv_Usage_Avg');
+
+            $powMin = $this->getDBMetric($this->exp_db_id, $idrack, 'MC_Power_Min');
+            $powMax = $this->getDBMetric($this->exp_db_id, $idrack, 'MC_Power_Max');
+            $powAvg = $this->getDBMetric($this->exp_db_id, $idrack, 'MC_Power_Avg');
+
+            $totHeatGen = $this->getDBMetric($this->exp_db_id, $idrack, 'MC_Heat_Generation_Tot');
+            $heatImb = $this->getDBMetric($this->exp_db_id, $idrack, 'MC_Imb_Heat');
+
+            $metrics = array(
+                'level' => "rack", 'dhur' => $dhur,
+                'energy' => $energy, 'productivity' => $productivity,
+                'loadMin' => $loadMin, 'loadMax' => $loadMax, 'loadAvg' => $loadAvg,
+                'powMin' => $powMin, 'powMax' => $powMax, 'powAvg' => $powAvg,
+                'totHeatGen' => $totHeatGen, 'heatImb' => $heatImb);
+
+            $twigParam = array(
+                'dcElems' => $dcElems,
+                'roomElems' => $roomElems,
+                'rackElems' => $rackElems,
+                'metrics' => $metrics,
+                'expParam' => $this->expParam);
+
+            return $this->render(
+                            'MetricReportBundle:Default:simReport.html.twig', $twigParam
+            );
+        } else {
+            return $this->reportError("missingReport");
+        }
+    }
+
+    /**
+     * @Route("/metric/levelnodegroup/{idnodegroup}", name="nodegroup_metric_report", defaults={"idnodegroup" = 0})
+     * @Template()
+     * @Method({"GET"})
+     */
+    public function levelnodegroupAction($idnodegroup) {
+        $this->initEnvironment();
+        $session = $this->getRequest()->getSession();
+        $session->set('idnodegroup', $idnodegroup);
+        $session->set('idnode', "0");
+
+        $idroom = $session->get('idroom');
+        $idrack = $session->get('idrack');
+
+        if (!$idroom || !$idrack) {
+            return $this->indexAction();
+        }
+
+        $dcElems = $this->getDBElem($this->exp_db_id, 'room', '');
+        $roomElems = $this->getDBElem($this->exp_db_id, 'rack', $idroom);
+        $rackElems = $this->getDBElem($this->exp_db_id, 'nodegroup', $idrack);
+        $ngElems = $this->getDBElem($this->exp_db_id, 'node', $idnodegroup);
+
+        // Init Metrics
+        if ($this->experiment_type == "2") {
+            $swap = $this->getDBMetric($this->exp_db_id, $idnodegroup, 'MC_Swap');
+            $energy = $this->getDBMetric($this->exp_db_id, $idnodegroup, 'MC_Energy');
+
+            $dhur = $this->getDBMetric($this->exp_db_id, $idnodegroup, 'MC_DH-UR');
+
+            $coolIndLowMin = $this->getDBMetric($this->exp_db_id, $idnodegroup, 'MC_Cool_Index_Lo_Min');
+            $coolIndLowMax = $this->getDBMetric($this->exp_db_id, $idnodegroup, 'MC_Cool_Index_Lo_Max');
+            $coolIndLowAvg = $this->getDBMetric($this->exp_db_id, $idnodegroup, 'MC_Cool_Index_Lo_Avg');
+
+            $coolIndHiMin = $this->getDBMetric($this->exp_db_id, $idnodegroup, 'MC_Cool_Index_Hi_Min');
+            $coolIndHiMax = $this->getDBMetric($this->exp_db_id, $idnodegroup, 'MC_Cool_Index_Hi_Max');
+            $coolIndHiAvg = $this->getDBMetric($this->exp_db_id, $idnodegroup, 'MC_Cool_Index_Hi_Avg');
+
+            $tempImbMin = $this->getDBMetric($this->exp_db_id, $idnodegroup, 'MC_Imb_Temp_CPU_Min');
+            $tempImbMax = $this->getDBMetric($this->exp_db_id, $idnodegroup, 'MC_Imb_Temp_CPU_Max');
+            $tempImbAvg = $this->getDBMetric($this->exp_db_id, $idnodegroup, 'MC_Imb_Temp_CPU_Avg');
+
+            $metrics = array('energy' => $energy, 'swap' => $swap, 'dhur' => $dhur,
+                'coolIndLowMin' => $coolIndLowMin, 'coolIndLowMax' => $coolIndLowMax, 'coolIndLowAvg' => $coolIndLowAvg,
+                'coolIndHiMin' => $coolIndHiMin, 'coolIndHiMax' => $coolIndHiMax, 'coolIndHiAvg' => $coolIndHiAvg,
+                'tempImbMin' => $tempImbMin, 'tempImbMax' => $tempImbMax, 'tempImbAvg' => $tempImbAvg);
+
+            $twigParam = array(
+                'dcElems' => $dcElems,
+                'roomElems' => $roomElems,
+                'rackElems' => $rackElems,
+                'ngElems' => $ngElems,
+                'metrics' => $metrics,
+                'expParam' => $this->expParam);
+
+            return $this->render('MetricReportBundle:Default:nodeGroupReport.html.twig', $twigParam);
+        } elseif ($this->experiment_type == "0") {
+            $energy = $this->getDBMetric($this->exp_db_id, $idnodegroup, 'MC_Energy');
+            $productivity = $this->getDBMetric($this->exp_db_id, $idnodegroup, 'MC_Productivity');
+            $swap = $this->getDBMetric($this->exp_db_id, $idnodegroup, 'MC_Swap');
+
+            $dhur = $this->getDBMetric($this->exp_db_id, $idnodegroup, 'MC_DH-UR');
+
+            $loadMin = $this->getDBMetric($this->exp_db_id, $idnodegroup, 'MC_Serv_Usage_Min');
+            $loadMax = $this->getDBMetric($this->exp_db_id, $idnodegroup, 'MC_Serv_Usage_Max');
+            $loadAvg = $this->getDBMetric($this->exp_db_id, $idnodegroup, 'MC_Serv_Usage_Avg');
+
+            $powMin = $this->getDBMetric($this->exp_db_id, $idnodegroup, 'MC_Power_Min');
+            $powMax = $this->getDBMetric($this->exp_db_id, $idnodegroup, 'MC_Power_Max');
+            $powAvg = $this->getDBMetric($this->exp_db_id, $idnodegroup, 'MC_Power_Avg');
+
+            $totHeatGen = $this->getDBMetric($this->exp_db_id, $idnodegroup, 'MC_Heat_Generation_Tot');
+            $heatImb = $this->getDBMetric($this->exp_db_id, $idnodegroup, 'MC_Imb_Heat');
+
+            $metrics = array(
+                'level' => "node-group", 'dhur' => $dhur,
+                'energy' => $energy, 'productivity' => $productivity, 'swap' => $swap,
+                'loadMin' => $loadMin, 'loadMax' => $loadMax, 'loadAvg' => $loadAvg,
+                'powMin' => $powMin, 'powMax' => $powMax, 'powAvg' => $powAvg,
+                'totHeatGen' => $totHeatGen, 'heatImb' => $heatImb);
+
+            $twigParam = array(
+                'dcElems' => $dcElems,
+                'roomElems' => $roomElems,
+                'rackElems' => $rackElems,
+                'ngElems' => $ngElems,
+                'metrics' => $metrics,
+                'expParam' => $this->expParam);
+
+            return $this->render(
+                            'MetricReportBundle:Default:simReport.html.twig', $twigParam
+            );
+        } else {
+            return $this->reportError("missingReport");
+        }
+    }
+
+    /**
+     * @Route("/metric/levelnode/{idnode}", name="node_metric_report", defaults={"idnode" = 0})
+     * @Template()
+     * @Method({"GET"})
+     */
+    public function levelnodeAction($idnode) {
+        $this->initEnvironment();
+        $session = $this->getRequest()->getSession();
+        $session->set('idnode', $idnode);
+
+        $idroom = $session->get('idroom');
+        $idrack = $session->get('idrack');
+        $idnodegroup = $session->get('idnodegroup');
+
+        if (!$idroom || !$idrack || !$idnodegroup) {
+            return $this->indexAction();
+        }
+
+        $dcElems = $this->getDBElem($this->exp_db_id, 'room', '');
+        $roomElems = $this->getDBElem($this->exp_db_id, 'rack', $idroom);
+        $rackElems = $this->getDBElem($this->exp_db_id, 'nodegroup', $idrack);
+        $ngElems = $this->getDBElem($this->exp_db_id, 'node', $idnodegroup);
+
+        // Init Metrics
+        if ($this->experiment_type == "2") {
+            $cpuTmpMin = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_TemperatureCPU_Min');
+            $cpuTmpMax = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_TemperatureCPU_Max');
+            $cpuTmpAvg = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_TemperatureCPU_Avg');
+
+            $inTmpMin = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Temperature_Min_in');
+            $inTmpMax = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Temperature_Max_in');
+            $inTmpAvg = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Temperature_Avg_in');
+
+            $outTmpMin = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Temperature_Min_out');
+            $outTmpMax = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Temperature_Max_out');
+            $outTmpAvg = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Temperature_Avg_out');
+
+            $cpuUsgMin = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_CPU_Usage_Min');
+            $cpuUsgMax = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_CPU_Usage_Max');
+            $cpuUsgAvg = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_CPU_Usage_Avg');
+
+            $servUsgMin = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Serv_Usage_Min');
+            $servUsgMax = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Serv_Usage_Max');
+            $servUsgAvg = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Serv_Usage_Avg');
+
+            $netUsgMin = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Net_Usage_Min');
+            $netUsgMax = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Net_Usage_Max');
+            $netUsgAvg = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Net_Usage_Avg');
+
+            $memUsgMin = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Mem_Usage_Min');
+            $memUsgMax = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Mem_Usage_Max');
+            $memUsgAvg = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Mem_Usage_Avg');
+
+            $powUsgMin = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Power_Usage_Min');
+            $powUsgMax = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Power_Usage_Max');
+            $powUsgAvg = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Power_Usage_Avg');
+
+            $powMin = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Power_Min');
+            $powMax = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Power_Max');
+            $powAvg = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Power_Avg');
+
+            $productivity = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Productivity');
+
+            $coolIndLowMin = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Cool_Index_Lo_Min');
+            $coolIndLowMax = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Cool_Index_Lo_Max');
+            $coolIndLowAvg = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Cool_Index_Lo_Avg');
+
+            $coolIndHiMin = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Cool_Index_Hi_Min');
+            $coolIndHiMax = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Cool_Index_Hi_Max');
+            $coolIndHiAvg = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Cool_Index_Hi_Avg');
+
+            $totHeatGen = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Heat_Generation_Tot');
+
+            $metrics = array(
+                'cpuTmpMin' => $cpuTmpMin, 'cpuTmpMax' => $cpuTmpMax, 'cpuTmpAvg' => $cpuTmpAvg,
+                'inTmpMin' => $inTmpMin, 'inTmpMax' => $inTmpMax, 'inTmpAvg' => $inTmpAvg,
+                'outTmpMin' => $outTmpMin, 'outTmpMax' => $outTmpMax, 'outTmpAvg' => $outTmpAvg,
+                'cpuUsgMin' => $cpuUsgMin, 'cpuUsgMax' => $cpuUsgMax, 'cpuUsgAvg' => $cpuUsgAvg,
+                'servUsgMin' => $servUsgMin, 'servUsgMax' => $servUsgMax, 'servUsgAvg' => $servUsgAvg,
+                'netUsgMin' => $netUsgMin, 'netUsgMax' => $netUsgMax, 'netUsgAvg' => $netUsgAvg,
+                'memUsgMin' => $memUsgMin, 'memUsgMax' => $memUsgMax, 'memUsgAvg' => $memUsgAvg,
+                'powUsgMin' => $powUsgMin, 'powUsgMax' => $powUsgMax, 'powUsgAvg' => $powUsgAvg,
+                'powMin' => $powMin, 'powMax' => $powMax, 'powAvg' => $powAvg,
+                'productivity' => $productivity,
+                'coolIndLowMin' => $coolIndLowMin, 'coolIndLowMax' => $coolIndLowMax, 'coolIndLowAvg' => $coolIndLowAvg,
+                'coolIndHiMin' => $coolIndHiMin, 'coolIndHiMax' => $coolIndHiMax, 'coolIndHiAvg' => $coolIndHiAvg,
+                'totHeatGen' => $totHeatGen);
+
+            $twigParam = array(
+                'dcElems' => $dcElems,
+                'roomElems' => $roomElems,
+                'rackElems' => $rackElems,
+                'ngElems' => $ngElems,
+                'metrics' => $metrics,
+                'expParam' => $this->expParam);
+
+            return $this->render('MetricReportBundle:Default:nodeReport.html.twig', $twigParam);
+        } elseif ($this->experiment_type == "0") {
+            $energy = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Energy');
+            $productivity = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Productivity');
+
+            $loadMin = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Serv_Usage_Min');
+            $loadMax = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Serv_Usage_Max');
+            $loadAvg = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Serv_Usage_Avg');
+
+            $powMin = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Power_Min');
+            $powMax = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Power_Max');
+            $powAvg = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Power_Avg');
+
+            $totHeatGen = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Heat_Generation_Tot');
+            $heatImb = $this->getDBMetric($this->exp_db_id, $idnode, 'MC_Imb_Heat');
+
+            $metrics = array(
+                'level' => "node",
+                'energy' => $energy, 'productivity' => $productivity,
+                'loadMin' => $loadMin, 'loadMax' => $loadMax, 'loadAvg' => $loadAvg,
+                'powMin' => $powMin, 'powMax' => $powMax, 'powAvg' => $powAvg,
+                'totHeatGen' => $totHeatGen, 'heatImb' => $heatImb);
+
+            $twigParam = array(
+                'dcElems' => $dcElems,
+                'roomElems' => $roomElems,
+                'rackElems' => $rackElems,
+                'ngElems' => $ngElems,
+                'metrics' => $metrics,
+                'expParam' => $this->expParam);
+
+            return $this->render(
+                            'MetricReportBundle:Default:simReport.html.twig', $twigParam
+            );
+        } else {
+            return $this->reportError("missingReport");
+        }
+    }
+
+}
+

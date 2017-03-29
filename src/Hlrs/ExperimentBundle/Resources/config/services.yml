@@ -1,0 +1,17 @@
+parameters:
+#    experiment.example.class: Hlrs\ExperimentBundle\Example
+
+services:
+#    experiment.example:
+#        class: %experiment.example.class%
+#        arguments: [@service_id, "plain_value", %parameter%] 
+
+# Form type extensions
+    #hlrs.experiment.form_extension_collection:
+    #    class: Hlrs\ExperimentBundle\Form\Extension\CollectionTypeExtension 
+    #    tags:
+    #        - { name: form.type_extension, alias: collection }
+   #     class: Hlrs\ExperimentBundle\Form\Extension\CollectionTypeExtension
+   #     arguments: [@router]
+   #     tags:
+   #         - { name: form.type_extension, alias: collection }

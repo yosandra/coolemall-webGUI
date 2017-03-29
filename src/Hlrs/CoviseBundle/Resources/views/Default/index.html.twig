@@ -1,0 +1,15 @@
+{% set showTitle = true %}
+{% extends '::gui_base.html.twig' %}
+{% block title %}Covise - Simulation{% endblock %}
+
+{% block content %}
+{% set context = app.session.get('context') %}
+
+{% if context != '' %}    
+  <center><iframe src="{{ CoviseHost }}:{{ CovisePort }}/coolEmAll.html?experiment={{ context.experiment_name }}&trial={{context.trial_name}}&experiment_type={{context.experiment_type}}&path_plmxml={{context.path_plmxml}}&object_path={{context.object_path}}&testbed_instance={{context.testbed_instance}}" width="940" height="1050"> </iframe></center>
+{% else %}
+      <strong> <center class="text-info">Please set a trial on the session variable (Experiments -> List -> trials -> Set Context)</center></strong>
+{% endif %}
+
+{% endblock %}
+

@@ -1,0 +1,7 @@
+#psnc_mopgui_homepage:
+#    pattern:  /mopgui/{type}
+#    defaults: { _controller: PsncMopguiBundle:Default:index, type: onev }
+
+PsncMopguiBundle:
+    resource: "@PsncMopguiBundle/Controller/"
+    type:     annotation

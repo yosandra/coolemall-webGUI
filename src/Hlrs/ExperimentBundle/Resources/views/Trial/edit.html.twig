@@ -1,0 +1,15 @@
+{% set showTitle = true %}
+{% extends '::gui_base.html.twig' %}
+{% block title %}Edit trial{% endblock %}
+
+{% block body -%}
+
+    <form action="{{ path('trial_edit', { 'id': entity.id }) }}" method="POST" {{ form_enctype(edit_form) }}>        
+        {{ form_widget(edit_form) }}
+            <button type="submit" class="blue-button blue pull-right">SAVE</button>
+            <a href="{{ path('trials', { 'id_experiment': entity.Experiment.id }) }}" class="blue-button white pull-right">
+                Back
+            </a>            
+    </form>
+
+{% endblock %}

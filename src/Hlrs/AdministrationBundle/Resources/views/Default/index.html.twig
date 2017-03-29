@@ -1,0 +1,27 @@
+{% set showTitle = true %}
+{% extends '::gui_base.html.twig' %}
+{% block title %}Home{% endblock %}
+ 
+{% block body %}
+    
+    <div class="content" id="justifyText">
+      <h1>Welcome to Simulation Visualization and Decision support Toolkit!</h1>  
+      <p>The Simulation, Visualization and Decision Support Toolkit (SVD Toolkit) is a platform for interactive analysis and user driven optimization of energy- & cooling efficiency in data centers. It can be used to optimize design of new data centers or to improve operation of existing ones.  </p>
+      <br>
+      <strong>Introduction</strong>
+      <p>The simulation platform follows a holistic approach and integrates models of applications, workloads, workload scheduling policies, hardware characteristics and cooling, capable to perform simulation on various scale level. The results of this platform include (i) estimations of energy consumption of workloads obtained from the workload simulation, (ii) thermal air-flows distribution obtained from the computational fluid dynamics (CFD) simulations, and (iii) energy- and cooling efficiency metrics assessing various configurations of data centers on various granularity levels. The SVD Toolkit provides also means for advanced visualization and interactive steering of simulation parameters, facilitating user-driven optimization process.</p>
+      <br>
+      <strong>Interaction with SVD Toolkit</strong>
+      <p>The interaction  with the SVD Toolkit is done via this CoolEmAll Web GUI that provides a web based user interface allowing interacting with the SVD toolkit and visualizing its results. It comprises several GUIs integrated into common web based GUI environment.
+<ul>
+    <li><strong>Experiments</strong> configuration GUI guiding users in specifying parameters required for simulations. </li>
+<li>The <strong>DEBB</strong> configuration GUI allows defining, selecting and configuring data center building blocks (DEBBs) on various granularity levels (node, node-group, rack and room level). DEBBs reflect components of the data center and contain models necessary for workload and heat-flow simulation.</li>
+<li><strong>DCWorms</strong>  (Data Centre Workload and Resource Management Simulator) is used for experimental studies of various resource management and scheduling policies. DCworms GUI allows selecting applications, workloads and scheduling policies, and presenting the results of the workload scheduling in a GUI.</li>
+<li><strong>COVISE</strong> GUI presents entire simulation results of the heat-flow (CFD) simulation, visualizing air and heat flow across all building blocks (DEBBs). It allows interacting with the CFD-Simulation and change particular parameters such as the position of racks within the room, and visualizing CFD simulation results using one of the COVISE Rendere. Such approach allows interactive evaluation of various room layout configurations to find the optimal one preventing hot-spots. </li>
+<li><strong>MOP</strong> GUI allows retrieving, visualizing and comparing testbed (real measurements) and simulation based results (from CFD and DCworms) against each other to validate models. Both real data obtained from measurements (e.g. temperatures, system load) and simulated data from CFD and Workload Simulation are stored in the database, both of them will be displayed in the MOP GUI to compare results and validate models. </li>
+<li><strong>Report</strong> page provides assessment metrics that evaluate energy- and cooling efficiency on various granularity level of the simulation results, applying metrics calculated by the metric calculator to assess efficiency of various configurations.</li>
+</ul>
+</p>
+
+    </div>    
+{% endblock %}

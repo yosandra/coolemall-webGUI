@@ -1,0 +1,134 @@
+{% extends 'MetricReportBundle::Default/index.html.twig' %}
+
+{% block content %}
+{{ parent() }}
+<center>
+    {% if metrics['level'] == "dc" %}
+    <table>
+        <tr>
+            <th colspan="2">Key metrics</th>
+        </tr>
+        <tr>
+            <td>Electricity cost</td>
+            <td>{{ metrics['ecost'] }} euros</td>
+        </tr>
+        <tr>
+            <td>Carbon emissions</td>
+            <td>{{ metrics['cfoot'] }} gCO<sub>2</sub></td>
+        </tr>
+        <tr>
+            <td>Power usage efficiency</td>
+            <td>{{ metrics['pue'] }} </td>
+        </tr>
+        <tr>
+            <td>Total energy consumption</td>
+            <td>{{ metrics['energy'] }} Wh</td>
+        </tr>
+    </table>
+    {% else %}
+    <table>
+        <tr>
+            <td colspan="2" align="center">
+        {% if metrics['level'] == "room" %}
+            {% set idroom = app.session.get('idroom') %}
+                {{ metrics['level'] }} level: {{ idroom }}
+        {% elseif metrics['level'] == "rack" %}
+            {% set idroom = app.session.get('idroom') %}
+            {% set idrack = app.session.get('idrack') %}
+                {{ metrics['level'] }} level: {{ idroom }}/{{ idrack }}
+        {% elseif metrics['level'] == "node-group" %}
+            {% set idroom = app.session.get('idroom') %}
+            {% set idrack = app.session.get('idrack') %}
+            {% set idnodegroup = app.session.get('idnodegroup') %}
+                {{ metrics['level'] }} level: {{ idroom }}/{{ idrack }}/{{ idnodegroup }}
+        {% elseif metrics['level'] == "node" %}
+            {% set idroom = app.session.get('idroom') %}
+            {% set idrack = app.session.get('idrack') %}
+            {% set idnodegroup = app.session.get('idnodegroup') %}
+            {% set idnode = app.session.get('idnode') %}
+                {{ metrics['level'] }} level: {{ idroom }}/{{ idrack }}/{{ idnodegroup }}/{{ idnode }}
+        {% endif %}
+            </td>
+        </tr>
+    </table>
+<br>
+    <table>
+        <tr>
+            <th colspan="2">Resources usage metrics</th>
+        </tr>
+            {% if (metrics['level'] == "room" or metrics['level'] == "rack" or metrics['level'] == "node-group") %}
+        <tr>
+            <td class="metricName">Deployed hardware utilisation Ratio (DH/UR)</td>
+            <td>{{ metrics['dhur'] }}</td>
+        </tr>
+            {% endif %}
+        <tr>
+            <td class="metricName">Load</td>
+            <td>
+                Min: {{ metrics['loadMin'] }}<br>
+                Avg: {{ metrics['loadAvg'] }}<br>
+                Max: {{ metrics['loadMax'] }}
+            </td>
+        </tr>
+    </table>
+    <table>
+        <tr>
+            <th colspan="2">Power-based metrics</th>
+        </tr>
+            {% if metrics['level'] == "room" %}
+        <tr>
+            <td class="metricName">Power usage efficiency</td>
+            <td>{{ metrics['pue'] }}</td>
+        </tr>
+        <tr>
+            <td class="metricName">Data Center Infrastructure Efficiency</td>
+            <td>{{ metrics['dcie'] }} %</td>
+        </tr>
+            {% endif %}
+        <tr>
+            <td class="metricName">Power used</td>
+            <td>
+                Min: {{ metrics['powMin'] }} W<br>
+                Avg: {{ metrics['powAvg'] }} W<br>
+                Max: {{ metrics['powMax'] }} W
+            </td>
+        </tr>
+            {% if metrics['level'] == "node-group" %}
+        <tr>
+            <td class="metricName">SWAP</td>
+            <td>{{ metrics['swap'] }} (useful work)/(number U*W)</td>
+        </tr>
+            {% endif %}
+
+    </table>
+    <table>
+        <tr>
+            <th colspan="2">Energy-based metrics</th>
+        </tr>
+        <tr>
+            <td class="metricName">Energy</td>
+            <td>{{ metrics['energy'] }} Wh</td>
+        </tr>
+        <tr>
+            <td class="metricName">Productivity</td>
+            <td>{{ metrics['productivity'] }} (useful work)/Wh</td>
+        </tr>
+    </table>
+    <table>
+        <tr>
+            <th colspan="2">Heat aware metrics</th>
+        </tr>
+        <tr>
+            <td class="metricName">Total heat generation</td>
+            <td>{{ metrics['totHeatGen'] }} W</td>
+        </tr>
+            {% if metrics['level'] != "node" %}
+        <tr>
+            <td class="metricName">Imbalance of heat generation</td>
+            <td>{{ metrics['heatImb'] }} %</td>
+        </tr>
+            {% endif %}
+    </table>
+    {% endif %}
+</center>
+{% endblock %}

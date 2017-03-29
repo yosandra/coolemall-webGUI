@@ -1,0 +1,3 @@
+AdministrationBundle:
+    resource: "@AdministrationBundle/Controller/"
+    type:     annotation

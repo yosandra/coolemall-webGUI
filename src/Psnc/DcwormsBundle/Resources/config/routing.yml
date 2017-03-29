@@ -1,0 +1,7 @@
+#psnc_dcworms_homepage:
+#    pattern:  /dcworms/{param}
+#    defaults: { _controller: PsncDcwormsBundle:Default:index, param : 0 }
+
+PsncDcwormsBundle:
+    resource: "@PsncDcwormsBundle/Controller/"
+    type: annotation

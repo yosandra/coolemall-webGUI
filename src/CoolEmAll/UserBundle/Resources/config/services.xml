@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+
+<container xmlns="http://symfony.com/schema/dic/services"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <!--
+    <parameters>
+        <parameter key="cool_em_all_user.example.class">CoolEmAll\UserBundle\Example</parameter>
+    </parameters>
+
+    <services>
+        <service id="cool_em_all_user.example" class="%cool_em_all_user.example.class%">
+            <argument type="service" id="service_id" />
+            <argument>plain_value</argument>
+            <argument>%parameter_name%</argument>
+        </service>
+    </services>
+    -->
+     <services>
+
+        <service id="coolemall.user.profile.form.type" class="CoolEmAll\UserBundle\Form\ProfileFormType">
+            <tag name="form.type" alias="coolemall_user_profile" />
+            <argument>%fos_user.model.user.class%</argument>
+        </service>
+
+    </services>
+</container>

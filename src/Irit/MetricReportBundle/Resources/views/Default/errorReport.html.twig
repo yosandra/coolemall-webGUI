@@ -1,0 +1,68 @@
+{% set showTitle = true %}
+{% extends '::gui_base.html.twig' %}
+{% block title %}Metrics Report - Error{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+<link href="{{ asset('css/reportStyle.css') }}" type="text/css" rel="stylesheet" />
+{% endblock %}
+
+{% block content %}
+<center>
+    {% if error == 0 %}
+    <b>Error, an experiment and a trial have to be selected first</b>
+    {% elseif error == 1 %}
+    <table>
+        <tr>
+            <th colspan="2">{{ type }} - {{ name }}</th>
+        </tr>
+        <tr>
+            <td>Trial name</td>
+            <td>{{ trial }}</td>
+        </tr>
+        <tr>
+            <td>Starting time</td>
+            <td>
+                {{ start }}<br>
+                {{ starte }} (Unix Epoch Time)
+            </td>
+        </tr>
+        <tr>
+            <td>Ending time</td>
+            <td>
+                {{ end }}<br>
+                {{ ende }} (Unix Epoch Time)
+            </td>
+        </tr>
+    </table>
+    <br>
+    <br>
+    <b>
+        The report has not been generated for this trial, would you like to generate it ?<br>
+        <a href="{{ path('report_generator') }}">Generate report</a></b>
+
+    {% elseif error == 2 %}
+        {% if errorType == 0 %}
+            <b>Error, some parameters are incorrect or missing to generate this report</b>
+        {% elseif errorType == 1 %}
+            <b>Error, the useful work nodes list and values list don't match<br>
+            <a href="{{ path('report_generator') }}">Generate report</a></b>
+        {% elseif errorType == 2 %}
+            <b>Error, the experiment or trial name is missing</b>
+        {% elseif errorType == 3 %}
+            <b>Error, not able to generate a report for this type of experiment</b>
+        {% endif %}
+    {% elseif error == 3 %}
+    <b>Testbed reports can not be generated using the Web GUI yet ...</b>
+    {% elseif error == 4 %}
+    <b>The following metric report is currently being generated ...<br>
+        Experiment: {{ reportExperiment }}<br>
+        Trial: {{ reportTrial }}
+    </b>
+    {% endif %}
+</center>
+
+
+{% endblock %}
+
+

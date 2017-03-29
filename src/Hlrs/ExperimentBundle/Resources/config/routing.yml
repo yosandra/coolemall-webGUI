@@ -1,0 +1,5 @@
+ExperimentBundle:    
+    resource: "@ExperimentBundle/Controller/"
+    type:     annotation
+    
+    

@@ -1,0 +1,73 @@
+{% extends 'MetricReportBundle::Default/index.html.twig' %}
+
+{% block content %}
+{{ parent() }}
+<center>
+{% set idroom = app.session.get('idroom') %}
+{% set idrack = app.session.get('idrack') %}
+{% set idnodegroup = app.session.get('idnodegroup') %}
+    <table>
+        <tr>
+            <td colspan="2" align="center">
+                node-group level: {{ idroom }}/{{ idrack }}/{{ idnodegroup }}
+            </td>
+        </tr>
+    </table>
+    <br>
+    <table>
+        <tr>
+            <th colspan="2">Resources usage metrics</th>
+        </tr>
+        <tr>
+            <td class="metricName">Deployed hardware utilisation Ratio (DH/UR)</td>
+            <td>{{ metrics['dhur'] }}</td>
+        </tr>
+    </table>
+    <table>
+        <tr>
+            <th colspan="2">Power-based metrics</th>
+        </tr>
+        <tr>
+            <td class="metricName">SWAP</td>
+            <td>{{ metrics['swap'] }} (useful work)/(number U*W)</td>
+        </tr>
+    </table>
+    <table>
+        <tr>
+            <th colspan="2">Energy-based metrics</th>
+        </tr>
+        <tr>
+            <td class="metricName">Energy consumed</td>
+            <td>{{ metrics['energy'] }} Wh</td>
+        </tr>
+    </table>
+    <table>
+        <tr>
+            <th colspan="2">Heat aware metrics</th>
+        </tr>
+        <tr>
+            <td class="metricName">Cooling index (low)</td>
+            <td>
+                Min: {{ metrics['coolIndLowMin'] }} %<br>
+                Avg: {{ metrics['coolIndLowAvg'] }} %<br>
+                Max: {{ metrics['coolIndLowMax'] }} %
+            </td>
+        </tr>
+        <tr>
+            <td class="metricName">Cooling index (high)</td>
+            <td>
+                Min: {{ metrics['coolIndHiMin'] }} %<br>
+                Avg: {{ metrics['coolIndHiAvg'] }} %<br>
+                Max: {{ metrics['coolIndHiMax'] }} %
+            </td>
+        </tr>
+        <tr>
+            <td class="metricName">Imbalance of nodes temperatures</td>
+            <td>Min: {{ metrics['tempImbMin'] }} %<br>
+                Avg: {{ metrics['tempImbAvg'] }} %<br>
+                Max: {{ metrics['tempImbMax'] }} %
+            </td>
+        </tr>
+    </table>
+</center>
+{% endblock %}

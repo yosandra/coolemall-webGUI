@@ -1,0 +1,40 @@
+
+{% extends '::gui_base.html.twig' %}
+
+{% block menu_left %}
+<div id="l_menu_div"></div>
+{% endblock %}
+
+{% block content %}
+{% stylesheets '@PsncMopguiBundle/Resources/public/css/*' filter='cssrewrite' %}
+<link rel="stylesheet" href="{{ asset_url }}" />
+{% endstylesheets %}
+
+<iframe id="ifr_cnt" data-src="//recs1.coolemall.eu/mop/{{ type }}.html?expid={{ expid }}&trial={{ trial }}&trialid={{ trialid }}" ></iframe>
+{% endblock %}
+
+{% block javascripts %}
+        {{ parent() }}
+
+<script>
+$('#l_menu_div').parent().remove();
+var cnt = $('#content');
+cnt.parent().attr('class', 'span12');
+cnt.parent().css('position', 'absolute');
+cnt.parent().css('left', 0);
+cnt.parent().width($(window).width());
+cnt.find('.span12').remove();
+$(document).ready(function(){
+console.log($('#footer'));
+
+$('#footer').css('position', 'relative');
+$('#footer').css('top', (250 + $(window).height()) +'px');
+
+var src = $('#ifr_cnt').data('src');
+$('#ifr_cnt').attr('src', src);
+});
+$('#ifr_cnt').height($(window).height());
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/> 
+        <title>Coolemall</title>       
+        {% block stylesheets %}
+        
+            {% stylesheets filter='cssrewrite' 
+                'bundles/debbconfig/css/main.css'
+                'bundles/administration/css/*'
+            %}
+                <link rel="stylesheet" href="{{ asset_url }}" />                            
+            {% endstylesheets %}
+        {% endblock %}
+        <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}" />       
+        
+
+        
+        
+    </head>
+    
+<body>        
+<div id="wrapper" class="navbar">   
+    	<div id="main-menu">
+		<div id="cea-logo"></div>                
+	</div>
+        <div class="navbar-inner">                
+                {{ knp_menu_render('AdministrationBundle:MenuBuilder:experimentMenu', {'currentClass': 'active', 'template': 'AdministrationBundle:Menu:knp_menu.html.twig'}) }}
+                {{ knp_menu_render('AdministrationBundle:MenuBuilder:debbMenu', {'currentClass': 'active', 'template': 'AdministrationBundle:Menu:knp_menu.html.twig'}) }}
+                {{ knp_menu_render('AdministrationBundle:MenuBuilder:dcwormsMenu', {'currentClass': 'active', 'template': 'AdministrationBundle:Menu:knp_menu.html.twig'}) }}
+ 		{{ knp_menu_render('AdministrationBundle:MenuBuilder:mopMenu', {'currentClass': 'active', 'template': 'AdministrationBundle:Menu:knp_menu.html.twig'}) }}
+                {{ knp_menu_render('AdministrationBundle:MenuBuilder:coviseMenu', {'currentClass': 'active', 'template': 'AdministrationBundle:Menu:knp_menu.html.twig'}) }}
+		{{ knp_menu_render('AdministrationBundle:MenuBuilder:reportMenu', {'currentClass': 'active', 'template': 'AdministrationBundle:Menu:knp_menu.html.twig'}) }}
+                {{ knp_menu_render('AdministrationBundle:MenuBuilder:userMenu', {'currentClass': 'active', 'template': 'AdministrationBundle:Menu:knp_menu.html.twig'}) }}
+         </div>
+        
+        
+	{% if showTitle is defined %}
+		<div class="pageTitle">
+			<div class="pageTitleText"><br/>{% block title %}{% endblock %}</div>
+			<div class="pageTitleFooter"></div>
+		</div>
+	{% else %}
+		<div class="pageTitleEmpty"></div>
+	{% endif %}
+
+	<div class="clear"></div>
+    
+    
+    
+<div class="container">        
+       
+<div class="row-fluid">
+        <div class="span3" style="max-width: 174px">		
+		{% block menu_left %}{% endblock %}	            
+        </div>
+        <div class="span9">
+            {% block form_header %}{% endblock %}
+            <div id="content"{% block contentExtras %}{% endblock %}>
+                
+                <div class="row">
+                <div class="span12">
+                    {% for notice_level in ['success','error','info', 'warning'] %}
+                        {% set session_var = 'hlrs_' ~ notice_level %}
+                        {% if app.session.flashbag.has(session_var) %}
+                            <div class="alert {{ 'alert-' ~ notice_level }}">
+                                {% for flash in app.session.flashbag.get(session_var) %}
+                                    <p>{{ flash|raw }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                </div>
+                    
+                {% block body %}
+                    {% block content %}{% endblock %}
+                {% endblock %}
+                
+
+        {% block javascripts %}                                        
+            {% javascripts 
+                '@AdministrationBundle/Resources/public/js/jquery.min.js' 
+                '@AdministrationBundle/Resources/public/js/bootstrap.min.js' 
+                '@AdministrationBundle/Resources/public/js/modernizr-2.6.2-respond-1.1.0.min.js' 
+                '@AdministrationBundle/Resources/public/js/main.js' 
+            %}                        
+                <script type="text/javascript" src="{{ asset_url }}"></script>
+            {% endjavascripts %}                                                
+        {% endblock %}
+         
+                
+                <div class="buttonbar pull-right">
+                    {% block buttonbar %}{% endblock %}
+                </div>
+            </div>
+
+            {% block form_footer %}{% endblock %}
+        </div>
+</div>
+<div id="" class="row">
+    <div id="footer" class="span12" >
+        <span>CoolEmAll (INFSO-ICT-288701) is a European Union co-funded project.</span><br/><b>ICT Theme: FP7-ICT-2011-7</b>
+    </div>
+</div>
+</div>            
+</body>
+</html>

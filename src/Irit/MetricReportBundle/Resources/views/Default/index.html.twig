@@ -1,0 +1,117 @@
+{% set showTitle = true %}
+{% extends '::gui_base.html.twig' %}
+
+{% block title %}
+    {% if expParam['type'] != "2" %}
+Simulation Report
+    {% else %}
+Testbed Report
+    {% endif %}
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+<link href="{{ asset('css/reportStyle.css') }}" type="text/css" rel="stylesheet" />
+{% endblock %}
+
+{% block content %}
+
+{% set idroom = app.session.get('idroom') %}
+{% set idrack = app.session.get('idrack') %}
+{% set idnodegroup = app.session.get('idnodegroup') %}
+{% set idnode = app.session.get('idnode') %}
+<center>
+    <table>
+        <tr>
+            <th colspan="2">{{ expParam['name'] }}</th>
+        </tr>
+        <tr>
+            <td>Trial name</td>
+            <td>{{ expParam['trial'] }}</td>
+        </tr>
+        <tr>
+            <td>Starting time</td>
+            <td> {{ expParam['start'] }} (Unix Epoch Time)</td>
+        </tr>
+        <tr>
+            <td>Ending time</td>
+            <td> {{ expParam['end'] }} (Unix Epoch Time)</td>
+        </tr>
+        <tr>
+            <td>Trial duration</td>
+            <td> {{ expParam['duration'] }} (H:M:S)</td>
+        </tr>
+    </table>
+    <table>
+        <tr>
+            <th colspan="2">Reports level</th>
+        </tr>
+        <tr>
+            <td colspan="2" align="center">
+                <a href="{{ path('metric_calculator') }}" class="selectedLevel">Data-center</a>
+            </td>
+        </tr>
+        <tr>
+            <td class="elemsName">Room:</td>
+            <td class="elemsLevel">
+            {% for room in dcElems %}
+                <a href="{{ path('room_metric_report', {'idroom': room}) }}"
+                {% if idroom == room %}
+                   class="selectedLevel"
+                {% endif %}
+                   >{{room}}</a>
+            {% endfor %}
+            </td>
+        </tr>
+        {% if idroom != "0" %}
+        <tr>
+            <td class="elemsName">Racks:</td>
+            <td class="elemsLevel">
+            {% for rack in roomElems %}
+                <a href="{{ path('rack_metric_report', {'idrack': rack}) }}"
+                {% if idrack == rack %}
+                   class="selectedLevel"
+                {% endif %}
+                   >{{rack}}</a>
+            {% endfor %}    
+            </td>
+        </tr>
+        {% endif %}
+
+        {% if idrack != "0" %}
+        <tr>
+            <td class="elemsName">Nodes-groups:</td>
+            <td class="elemsLevel">
+            {% for ng in rackElems %}
+                <a href="{{ path('nodegroup_metric_report', {'idnodegroup': ng}) }}"
+                {% if idnodegroup == ng %}
+                   class="selectedLevel"
+                {% endif %}
+                   >{{ng}}</a>
+            {% endfor %}    
+            </td>
+        </tr>
+        {% endif %}
+
+        {% if idnodegroup != "0" %}
+        <tr>
+            <td class="elemsName">Nodes:</td>
+            <td class="elemsLevel">
+            {% for node in ngElems %}
+                <a href="{{ path('node_metric_report', {'idnode': node}) }}"
+                {% if idnode == node %}
+                   class="selectedLevel"
+                {% endif %}
+                   >{{node}}</a>
+            {% endfor %}    
+            </td>
+        </tr>
+        {% endif %}
+
+    </table><br><br>
+</center>
+
+
+{% endblock %}
+
+

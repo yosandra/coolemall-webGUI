@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Settings">
+    <option name="pathToProjectContainer" value="$PROJECT_DIR$/../../../app/cache/dev/appDevDebugProjectContainer.php" />
+    <option name="pathToUrlGenerator" value="$PROJECT_DIR$/../../../app/cache/dev/appDevUrlGenerator.php" />
+  </component>
+</project>
+

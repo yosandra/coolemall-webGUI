@@ -1,0 +1,44 @@
+<?php
+
+namespace Psnc\MopguiBundle\Controller;
+
+use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route; /* PG */
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template; /* PG */
+
+class DefaultController extends Controller
+{
+    /**
+     * @Route("/mopgui/onev", name="mopgui_onev")
+     * @Template()
+    */  /* PG */
+    public function indexAction()   /*($type)*/
+    {
+	$session = $this->getRequest()->getSession();
+
+        $tmp_session = $session->get('context');
+
+        $TrialName=$tmp_session['trial_name'];
+	$TrialId=$tmp_session['id'];
+        $Experiment=$tmp_session['experiment_id'];
+	return $this->render('PsncMopguiBundle:Default:index.html.twig', array('t$array('type' => onev, 'expid' => $Experiment, 'trialid' => $TrialId, 'trial' =$ype' => onev, 'expid' => $Experiment, 'trialid' => $TrialId, 'trial' => $TrialName));
+    }
+
+    /**
+     * @Route("/mopgui/twov", name="mopgui_twov")
+     * @Template()
+    */  /* PG */
+    public function twovAction()   /*($type)*/
+    {
+	 $session = $this->getRequest()->getSession();
+
+        $tmp_session = $session->get('context');
+
+        $TrialName=$tmp_session['trial_name'];
+	$TrialId=$tmp_session['id'];
+        $Experiment=$tmp_session['experiment_id'];
+        //return $this->render('PsncMopguiBundle:Default:index.html.twig', array($
+   
+	return $this->render('PsncMopguiBundle:Default:index.html.twig', array('type' => twov, 'expid' => $Experiment, 'trialid' => $TrialId,  'trial' => $TrialName));
+    }
+}

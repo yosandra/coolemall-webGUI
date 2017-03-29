@@ -1,0 +1,150 @@
+{% extends '::gui_base.html.twig' %} 
+
+{% block stylesheets %}
+    {{ parent() }}
+    {% stylesheets filter='cssrewrite' 
+        'bundles/covise/bootstrap/css/bootstrap.css'
+        'bundles/covise/bootstrap/css/bootstrap-responsive.css'
+        'bundles/covise/bootstrap/css/bootstrap-form.css'
+        'bundles/covise/bootstrap/plugins/bootstrap-fileupload.css'
+        'bundles/covise/bootstrap/slider/css/slider.css'
+        'bundles/covise/css/hlrs.css'    
+    %}
+        <link rel="stylesheet" href="{{ asset_url }}" />                            
+    {% endstylesheets %}
+{% endblock %}
+
+{% block javascripts %}
+	
+	{% javascripts
+        '@CoviseBundle/Resources/public/js/jquery-2.0.3.min.js'
+        '@CoviseBundle/Resources/public/bootstrap/plugins/bootstrap-fileupload.js'
+        '@CoviseBundle/Resources/public/bootstrap/js/bootstrap-form.js'
+        '@CoviseBundle/Resources/public/bootstrap/js/bootstrap.js'
+        '@CoviseBundle/Resources/public/js/fabric.all.min.js'
+        '@CoviseBundle/Resources/public/bootstrap/slider/js/bootstrap-slider.js'        
+        '@CoviseBundle/Resources/public/js/cxf-utils.js'
+        '@CoviseBundle/Resources/public/js/cxfCoviseWsStub.js'
+        '@CoviseBundle/Resources/public/js/log4javascript.js'
+        '@CoviseBundle/Resources/public/js/cxfCovise.js'        
+	%}        
+	<script src="{{ asset_url }}" type="text/javascript"></script>                     
+        
+        <script>
+
+      $(document).ready(function() {
+        init("recsSim");
+        openCoviseNet();  
+      });
+
+      $(window).resize(function() {
+        alert('You resized the window!');
+         canvas.calcOffset();
+       });
+
+
+      $('#plmxmlFileButton').change(function(){
+        $('#plmxmlFile').val($(this).val());
+      });
+        </script>
+    
+	{% endjavascripts %}
+{% endblock %}  
+
+
+
+{% block body -%}
+  <h4> RECS Simulation </h4>    
+<form class="form-horizontal" id="recsSimForm">    
+
+    <!-- use this plugin or use the other one -->
+    <div class="control-group">
+      <label class="control-label">PLMXML</label> 
+      <div class="controls">
+        <div class="fileupload fileupload-new" data-provides="fileupload">
+          <span class="btn btn-file btn-primary">
+            <span class="fileupload-new">select file</span>
+            <span class="fileupload-exists">change</span>
+            <input type="file" id="plmxmlFile"/>
+          </span>
+          <span class="fileupload-preview"></span>
+            <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float:none">×</a>
+            <p class="help-block">Please choose the PLM XML file.</p>
+        </div>
+      </div>
+    </div>
+
+    <!--
+    <div class="control-group">
+      <label class="control-label">PLMXML</label> 
+      <div class="controls">    
+        <input type="file" id="plmxmlFileButton" style="display:none;" />       
+        <input type="text" id="plmxmlFile" class="input-xlarge" placeholder="Please load the file ..." onchange="sendTextParameter(this.id)"> 
+        <a class="btn btn-primary" onclick="$('#plmxmlFileButton').click();">Browse</a>
+        <p class="help-block">Please choose the PLM XML file.</p>
+      </div>      
+    </div>    
+     -->
+    <!--
+    <div class="control-group">
+      <div class="controls">
+        <div class="row">  
+          <div class="span4"> 
+            <div class="progress">  
+              <div class="bar" style="width: 0%;"></div> 
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    -->
+   
+
+    <div class="control-group">
+      <div class="controls">
+        <button type="button" class="btn btn-primary" id="fileUploadToServer" onclick="uploadFile()">upload</button>
+        <p class="help-block">Please load the PLM XML file to server.</p>
+      </div> 
+    </div>
+   
+    
+    <div class="control-group">
+      <label class="control-label">Project</label> 
+      <div class="controls">
+        <input type="text" id="project" class="input-medium" required="required" pattern="[A-Za-z0-9]*" data-error="Please give your project." onchange="sendTextParameter(this.id)"> 
+        <p class="help-block">Please give your project name.</p>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label"></label> 
+      <div class="controls"> 
+        <button type="button" class="btn btn-primary" id="runSim" onclick="executeModule(this.id)">run sim.</button>
+        <p class="help-block">Please run simulation first.</p>
+      </div>
+    </div> 
+
+    <hr></hr>          
+
+    <div class="control-group">
+      <label class="control-label">Cutting Surface</label> 
+      <div class="controls"> 
+          <input type="text" id="cutSurface" class="input-mini"> 
+      </div>
+    </div> 
+
+    <div class="control-group">
+      <label class="control-label"></label> 
+      <div class="controls">
+         
+        <button type="button" class="btn btn-primary" onclick="executeNet()">run vis.</button>
+      
+        <p class="help-block">Please run visualisation now.</p>
+      </div>
+    </div> 
+    </form>
+ 
+{% endblock %}
+
+  
+

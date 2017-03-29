@@ -1,0 +1,14 @@
+{% set showTitle = true %}
+{% extends '::gui_base.html.twig' %}
+{% block title %}Edit session{% endblock %}
+
+{% block body -%}    
+    <form action="{{ path('session_edit', { 'flag': flag }) }}" class= "form-horizontal" method="POST" novalidate>
+                {{ form_widget(edit_form) }}
+                <div class="form-actions">
+                    <button type="submit" class="blue-button blue pull-right">
+                        Save
+                    </button>
+                </div>
+    </form>    
+{% endblock %}

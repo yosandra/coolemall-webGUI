@@ -1,0 +1,94 @@
+{% set showTitle = true %}
+{% extends '::gui_base.html.twig' %}
+{% block title %}Trials{% endblock %}
+
+{% block body -%}    
+
+    <table class="record_properties">
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ entity.id }}</td>
+            </tr>
+            <tr>
+                <th>Trial Name</th>
+                <td>{{ entity.trialName }}</td>
+            </tr>
+            <tr>
+                <th>Experiment ID</th>
+                <td>{{ entity.Experiment }}</td>
+            </tr>
+            <tr>
+                <th>Timestamp Start</th>
+                <td>{{ entity.timestampStart|date('d.m.Y H:i:s') }}</td>
+            </tr>
+            <tr>
+                <th>Timestamp Selected</th>
+                <td>{{ entity.timestampSelected|date('d.m.Y H:i:s') }}</td>
+            </tr>
+            <tr>
+                <th>Timestamp End</th>
+                <td>{{ entity.timestampEnd|date('d.m.Y H:i:s') }}</td>
+            </tr>
+            <tr>
+                <th>Debb level</th>
+                <td>{{ entity.debbLevel }}</td>
+            </tr>
+            <tr>
+                <th>Debb URL</th>
+                <td>{{ entity.debbUrl }}</td>
+            </tr>
+            <tr>
+                <th>Application Profile URL</th>
+                <td>{{ entity.applicationProfileUrl }}</td>
+            </tr>
+            <tr>
+                <th>Workload Profile URL</th>
+                <td>{{ entity.workloadProfileUrl }}</td>
+            </tr>
+            <tr>
+                <th>Path PLMXML</th>
+                <td>{{ entity.pathPlmxml }}</td>
+            </tr>
+            <tr>
+                <th>Path WRL</th>
+                <td>{{ entity.pathWrl }}</td>
+            </tr>
+            <tr>
+                <th>Path STL</th>
+                <td>{{ entity.pathStl }}</td>
+            </tr>
+            <tr>
+                <th>Object Path </th>
+                <td>{{ entity.objectPath }}</td>
+            </tr>
+            <tr>
+                <th>Alpha</th>
+                <td>{{ entity.alpha }}</td>
+            </tr>
+            <tr>
+                <th>Testbed Instance</th>
+                <td>{{ entity.testbedInstance }}</td>
+            </tr>               
+            <tr>
+                <th>Baseline Temperature</th>
+                <td>{{ entity.baselineTemperature }}</td>
+            </tr>
+            <tr>
+                <th>Ambient Temperature</th>
+                <td>{{ entity.ambientTemperature }}</td>
+            </tr> 
+            <tr>
+                <th>Datacenter Massflow</th>
+                <td>{{ entity.datacenterMassflow }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+{% endblock %}
+{% block buttonbar %}
+        <a href="{{ path('trials', { 'id_experiment': entity.Experiment.id }) }}" class="blue-button white">
+            Back
+        </a>
+	<a href="{{ path('trial_edit', { 'id': entity.id }) }}" class="blue-button blue">Edit</a>
+{% endblock %}

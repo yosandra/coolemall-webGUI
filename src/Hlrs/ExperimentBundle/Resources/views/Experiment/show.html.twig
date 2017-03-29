@@ -1,0 +1,38 @@
+{% set showTitle = true %}
+{% extends '::gui_base.html.twig' %}
+{% block title %}Experiment{% endblock %}
+
+{% block body -%}
+
+
+    <table class="record_properties">
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ entity.id }}</td>
+            </tr>
+            <tr>
+                <th>Experimentid</th>
+                <td>{{ entity.experimentID }}</td>
+            </tr>
+            <tr>
+                <th>Description</th>
+                <td>{{ entity.description }}</td>
+            </tr>
+            <tr>
+                <th>Timestampstart</th>
+                <td>{{ entity.timestampStart|date('Y-m-d H:i:s') }}</td>
+            </tr>
+            <tr>
+                <th>Timestampend</th>
+                <td>{{ entity.timestampEnd|date('Y-m-d H:i:s') }}</td>
+            </tr>
+        </tbody>
+    </table>
+{% endblock %}
+{% block buttonbar %}
+        <a href="{{ path('experiment') }}" class="blue-button white">Back</a>
+        <a href="{{ path('experiment_edit', { 'id': entity.id }) }}" class="blue-button blue">
+            Edit
+        </a>	
+{% endblock %}

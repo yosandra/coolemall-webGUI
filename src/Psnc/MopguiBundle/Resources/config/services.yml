@@ -1,0 +1,7 @@
+parameters:
+#    psnc_mopgui.example.class: Psnc\MopguiBundle\Example
+
+services:
+#    psnc_mopgui.example:
+#        class: %psnc_mopgui.example.class%
+#        arguments: [@service_id, "plain_value", %parameter%]

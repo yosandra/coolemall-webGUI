@@ -1,0 +1,27 @@
+{% extends '::gui_base.html.twig' %}
+
+{% block menu_left %}
+
+<div id="l_menu_div"></div>
+{% endblock %}
+
+{% block content %}
+
+{% stylesheets '@PsncDcwormsBundle/Resources/public/css/*' filter='cssrewrite' 
+%} <link rel="stylesheet" href="{{ asset_url }}" />
+{% endstylesheets %}
+
+
+<iframe id="ifr_cnt" src="//recs1.coolemall.eu/dcworms/index?expid={{ expid }}&trial={{ trial }}&trialid={{ trialid }}"></iframe>
+{% endblock %}
+
+{% block javascripts %}
+	{{ parent() }}
+<script>
+$('#l_menu_div').parent().remove();
+var cnt = $('#content');
+cnt.parent().attr('class', 'span12');
+$('#ifr_cnt').height($(window).height() - 10);
+</script>
+
+{% endblock %}

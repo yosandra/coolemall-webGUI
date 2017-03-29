@@ -1,0 +1,73 @@
+{% set showTitle = true %}
+{% extends '::gui_base.html.twig' %}
+{% block title %}Trials{% endblock %}
+
+{% block body -%}
+ 
+
+    <table class="table table-striped table-condensed">
+        <thead>
+            <tr>                
+                
+                <th>Trial Name</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Debblevel</th>                
+                <th><div class="pull-right">Options</div></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for entity in entities %}
+            <tr>                
+            
+                <td>{{ entity.trialName }}</td> 
+                <td>{% if entity.timestampStart %}{{ entity.timestampStart|date('d.m.Y H:i') }}{% endif %}</td>
+                <td>{% if entity.timestampEnd %}{{ entity.timestampEnd|date('d.m.Y H:i') }}{% endif %}</td>
+                <td>{{ entity.debbLevel }}</td>                
+                
+                
+                
+                <td class="options">
+                    <div class="pull-right">
+                        {% spaceless %}
+                            
+                                <a href="{{ path('trial_show', { 'id': entity.id }) }}" class="btn">
+                                    <span rel="tooltip" title="Show"><i class="icon-eye-open"></i></span>
+				</a>
+                                <a href="{{ path('trial_edit', { 'id': entity.id }) }}" class="btn">
+                                    <span rel="tooltip" title="Edit"><i class="icon-edit"></i></span>
+				</a>
+                                <a href="{{ path('trial_delete', { 'id': entity.id }) }}" class="btn">
+                                    <span rel="tooltip" title="Delete"><i class="icon-trash"></i></span>
+				</a>
+                                <a href="{{ path('trial_set_context', { 'id': entity.id }) }}" class="btn">
+                                    <span rel="tooltip" title="Set Context"><i class="icon-upload"></i></span>
+				</a>                                                                
+                         {% endspaceless %}
+                    </div>
+                </td>                                                                            
+            </tr>
+        {% endfor %}
+            <tr>   
+                {% set context = app.session.get('context') %}
+                {% if context != '' %}    
+                <td>
+                    {% spaceless %}                
+                        <a href="{{ path('session_edit', { 'flag': '0' }) }}" class="btn">
+                                    <span rel="tooltip" title="Update Context"><i class="icon-refresh"></i></span>
+                        </a>                      
+                        <a href="{{ path('session_edit', { 'flag': '1' }) }}" class="btn">
+                                    <span rel="tooltip" title="Save Context"><i class="icon-download"></i></span>
+                        </a>                      
+                    {% endspaceless %}                 
+                
+                </td>
+                {% endif %}
+            </tr>
+        </tbody>
+    </table>
+
+{% endblock %}
+{% block buttonbar %}
+	<a href="{{ path('experiment') }}" class="blue-button white">Back</a>
+{% endblock %}

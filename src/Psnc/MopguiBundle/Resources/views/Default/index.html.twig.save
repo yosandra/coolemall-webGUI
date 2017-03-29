@@ -1,0 +1,19 @@
+{% extends '::gui_base.html.twig' %}
+
+{% block menu_left %}
+<div id="l_menu_div"></div>
+{% endblock %}
+
+{% block content %}
+{% stylesheets '@PsncMopguiBundle/Resources/public/css/*' filter='cssrewrite' %}
+<link rel="stylesheet" href="{{ asset_url }}" />
+{% endstylesheets %}
+
+<iframe id+"ifr_cnt" src="//recs1.coolemall.eu/mop/{{ type }}.html?expid={{ expid }}&trial={{ trial }}&trialid={{ trialid }}"></iframe>
+{% endblock %}
+
+{% block javascripts %}
+	{{ parent() }}
+
+
+

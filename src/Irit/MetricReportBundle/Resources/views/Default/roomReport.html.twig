@@ -1,0 +1,18 @@
+{% extends 'MetricReportBundle::Default/index.html.twig' %}
+
+{% block content %}
+    {{ parent() }}
+<center>
+    {% set idroom = app.session.get('idroom') %}
+    <table>
+        <tr>
+            <td colspan="2" align="center">
+                room level: {{ idroom }}
+            </td>
+        </tr>
+    </table>
+    <br>
+    Coming ...
+
+</center>
+{% endblock %}

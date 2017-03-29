@@ -1,0 +1,130 @@
+{% extends 'MetricReportBundle::Default/index.html.twig' %}
+
+{% block content %}
+{{ parent() }}
+<center>
+{% set idroom = app.session.get('idroom') %}
+{% set idrack = app.session.get('idrack') %}
+{% set idnodegroup = app.session.get('idnodegroup') %}
+{% set idnode = app.session.get('idnode') %}
+    <table>
+        <tr>
+            <td colspan="2" align="center">
+                node level: {{ idroom }}/{{ idrack }}/{{ idnodegroup }}/{{ idnode}}
+            </td>
+        </tr>
+    </table>
+    <br>
+    <table>
+        <tr>
+            <th colspan="2">Resources usage metrics</th>
+        </tr>
+        <tr>
+            <td class="metricName">CPU temperature</td>
+            <td>
+                Min: {{ metrics['cpuTmpMin'] }} &deg;C<br>
+                Avg: {{ metrics['cpuTmpAvg'] }} &deg;C<br>
+                Max: {{ metrics['cpuTmpMax'] }} &deg;C
+            </td>
+        </tr>
+        <tr>
+            <td class="metricName">Inlet temperature</td>
+            <td>
+                Min: {{ metrics['inTmpMin'] }} &deg;C<br>
+                Avg: {{ metrics['inTmpAvg'] }} &deg;C<br>
+                Max: {{ metrics['inTmpMax'] }} &deg;C
+            </td>
+        </tr>
+        <tr>
+            <td class="metricName">Outlet temperature</td>
+            <td>
+                Min: {{ metrics['outTmpMin'] }} &deg;C<br>
+                Avg: {{ metrics['outTmpAvg'] }} &deg;C<br>
+                Max: {{ metrics['outTmpMax'] }} &deg;C
+            </td>
+        </tr>
+        <tr>
+            <td class="metricName">CPU usage</td>
+            <td>
+                Min: {{ metrics['cpuUsgMin'] }}<br>
+                Avg: {{ metrics['cpuUsgAvg'] }}<br>
+                Max: {{ metrics['cpuUsgMax'] }}
+            </td>
+        </tr>
+        <tr>
+            <td class="metricName">Server usage</td>
+            <td>
+                Min: {{ metrics['servUsgMin'] }}<br>
+                Avg: {{ metrics['servUsgAvg'] }}<br>
+                Max: {{ metrics['servUsgMax'] }}
+            </td>
+        </tr>
+        <tr>
+            <td class="metricName">Network usage</td>
+            <td>
+                Min: {{ metrics['netUsgMin'] }}<br>
+                Avg: {{ metrics['netUsgAvg'] }}<br>
+                Max: {{ metrics['netUsgMax'] }}
+            </td>
+        </tr>
+        <tr>
+            <td class="metricName">Memory usage</td>
+            <td>
+                Min: {{ metrics['memUsgMin'] }}<br>
+                Avg: {{ metrics['memUsgAvg'] }}<br>
+                Max: {{ metrics['memUsgMax'] }}
+            </td>
+        </tr>
+    </table>
+    <table>
+        <tr>
+            <th colspan="2">Power-based metrics</th>
+        </tr>
+        <tr>
+            <td class="metricName">Power used</td>
+            <td>
+                Min: {{ metrics['powMin'] }} W<br>
+                Avg: {{ metrics['powAvg'] }} W<br>
+                Max: {{ metrics['powMax'] }} W
+            </td>
+        </tr>
+        <tr>
+            <td class="metricName">Power usage</td>
+            <td>
+                Min: {{ metrics['powUsgMin'] }}<br>
+                Avg: {{ metrics['powUsgAvg'] }}<br>
+                Max: {{ metrics['powUsgMax'] }}
+            </td>
+        </tr>
+        <tr>
+            <td class="metricName">Productivity</td>
+            <td>{{ metrics['productivity'] }} (useful work)/Wh</td>
+        </tr>
+    </table>
+    <table>
+        <tr>
+            <th colspan="2">Heat aware metrics</th>
+        </tr>
+        <tr>
+            <td class="metricName">Minimum cooling index (low)</td>
+            <td>
+                Min: {{ metrics['coolIndLowMin'] }} %<br>
+                Avg: {{ metrics['coolIndLowAvg'] }} %<br>
+                Max: {{ metrics['coolIndLowMax'] }} %
+            </td>
+        </tr>
+        <tr>
+            <td class="metricName">Maximum cooling index (high)</td>
+            <td>
+                Min: {{ metrics['coolIndHiMin'] }} %<br>
+                Avg: {{ metrics['coolIndHiAvg'] }} %<br>
+                Max: {{ metrics['coolIndHiMax'] }} %
+            </td>
+        </tr>
+        <tr>
+            <td class="metricName">Total heat generation</td>
+            <td>{{ metrics['totHeatGen'] }} W</td>
+        </tr>
+    </table>
+</center>
+{% endblock %}

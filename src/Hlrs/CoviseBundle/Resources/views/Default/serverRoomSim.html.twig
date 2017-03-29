@@ -1,0 +1,79 @@
+{% extends '::gui_base.html.twig' %} 
+
+{% block stylesheets %}
+    {{ parent() }}
+    {% stylesheets filter='cssrewrite' 
+        'bundles/covise/bootstrap/css/bootstrap.css'
+        'bundles/covise/bootstrap/css/bootstrap-responsive.css'
+        'bundles/covise/bootstrap/css/bootstrap-form.css'
+        'bundles/covise/bootstrap/plugins/bootstrap-fileupload.css'
+        'bundles/covise/bootstrap/slider/css/slider.css'
+        'bundles/covise/css/hlrs.css'    
+    %}
+        <link rel="stylesheet" href="{{ asset_url }}" />                            
+    {% endstylesheets %}
+{% endblock %}
+
+
+{% block javascripts %}
+	
+	{% javascripts
+        '@CoviseBundle/Resources/public/js/jquery-2.0.3.min.js'
+        '@CoviseBundle/Resources/public/bootstrap/plugins/bootstrap-fileupload.js'
+        '@CoviseBundle/Resources/public/bootstrap/js/bootstrap-form.js'
+        '@CoviseBundle/Resources/public/bootstrap/js/bootstrap.js'
+        '@CoviseBundle/Resources/public/js/fabric.all.min.js'
+        '@CoviseBundle/Resources/public/bootstrap/slider/js/bootstrap-slider.js'        
+        '@CoviseBundle/Resources/public/js/cxf-utils.js'
+        '@CoviseBundle/Resources/public/js/cxfCoviseWsStub.js'
+        '@CoviseBundle/Resources/public/js/log4javascript.js'
+        '@CoviseBundle/Resources/public/js/cxfCovise.js'        
+	%}        
+	<script src="{{ asset_url }}" type="text/javascript"></script>                     
+
+ <script type="text/javascript">
+      $(document).ready(function() {
+        init("serverRoomSim");
+        openCoviseNet();  
+      });
+
+      $(window).resize(function() {
+        alert('You resized the window!');
+         canvas.calcOffset();
+       });
+</script>
+    
+	{% endjavascripts %}
+{% endblock %}  
+
+
+
+{% block body -%}
+    
+<form class="form-horizontal" id="rechenraumOptForm">
+      <div class="row">      
+        <div class="span9">         
+          <!-- Module Parameters -->        
+          <fieldset id="moduleParam"> 
+            <legend>COVISE Module Parameters</legend>              
+              <div class="control-group" id="divCutSurface">
+                <label>Cutting Surface</label>
+                <input type="text" id="cutSurface" class="input-mini">
+              </div>            
+              <div class="control-group" id="divColorMap">
+                <label> Color Map</label>  
+                <select name="colorMap" id="colorMap">
+                  <option>IAG</option>  
+                  <option>Blue</option>  
+                  <option>Blue-light</option>  
+                  <option>MTransparent</option>  
+                  <option>Star</option> 
+                  <option>ITSM</option>  
+                  <option>Rainbow</option>   
+                </select> 
+              </div>
+          </fieldset> 
+      </div>
+    </form>
+ 
+{% endblock %}
